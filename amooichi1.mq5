@@ -51,7 +51,7 @@ void OnTick() {
         Print("SpanB_2:>", SpanB_2);
 
         double close_1 = MathRound(iClose(Symbol(), Period(), 1) * pow(10, Digits())) / pow(10, Digits());
-        if(first_cond && expire_cond < 6) {
+        if(first_cond && expire_cond < 6 && PositionSelect(_Symbol)) {
             expire_cond++;
             if(
                 Ten_1 == Ten_2 &&
@@ -62,11 +62,20 @@ void OnTick() {
                 double tp;
                 double price;
                 if(close_1 > Kij_1) {
-                    price = SymbolInfoDouble(Symbol(), SYMBOL_BID);
-                    // request.price = SymbolInfoDouble(Symbol(), SYMBOL_ASK);
+                    price = SymbolInfoDouble(Symbol(), SYMBOL_ASK);
                     sl = Kij_1 - Point() * 50;
                     tp = price + (3 * (price - sl));
                     if(trade("ORDER_TYPE_BUY", "0.1", sl, tp)) {
+                        first_cond  = false;
+                        expire_cond = 0;
+                    }
+                }
+
+                if(close_1 < Kij_1) {
+                    price = SymbolInfoDouble(Symbol(), SYMBOL_BID);
+                    sl = Kij_1 + Point() * 50;
+                    tp = price - (3 * (sl - price));
+                    if(trade("ORDER_TYPE_SELL", "0.1", sl, tp)) {
                         first_cond  = false;
                         expire_cond = 0;
                     }
