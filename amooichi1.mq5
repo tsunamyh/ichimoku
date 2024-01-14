@@ -67,3 +67,89 @@ double iIchimokuGet(const int buffer, const int index) {
     }
     return (Ichimoku[0]);
 }
+
+void trade(string type, string vl, double sl, double tp) {
+
+    MqlTradeRequest request = {};
+    MqlTradeResult  result  = {};
+    if(type == "ORDER_TYPE_BUY") {
+        request.type = ORDER_TYPE_BUY;
+    }
+    if(type == "ORDER_TYPE_SELL") {
+        request.type = ORDER_TYPE_SELL;
+    }
+
+    request.action = TRADE_ACTION_DEAL;
+    request.symbol = Symbol();
+    request.volume = StringToDouble(vl);
+    request.sl     = (sl);
+    request.tp     = (tp);
+    // request.magic    =StringToInteger(magic);
+    // request.price        = (price);
+    request.type_filling = ORDER_FILLING_FOK;
+    request.deviation    = 5;
+    // request.expiration   = TimeCurrent() + 1200 * 3;
+    // request.type_time    = ORDER_TIME_SPECIFIED;
+    if(type == "ORDER_TYPE_SELL") {
+        request.price = SymbolInfoDouble(Symbol(), SYMBOL_BID);
+    }
+    if(type == "ORDER_TYPE_BUY") {
+        request.price = SymbolInfoDouble(Symbol(), SYMBOL_ASK);
+    }
+    Print(__FUNCTION__, request.price);
+    bool success = OrderSend(request, result);
+    Print("success: ", success);
+    if(!success) {
+        uint answer = result.retcode;
+        Print("TradeLog: Trade request failed. Error = ", GetLastError());
+        switch(answer) {
+            //--- requote
+            case 10004: {
+                Print("TRADE_RETCODE_REQUOTE");
+                Print("request.price = ", request.price, "   result.ask = ",
+                      result.ask, " result.bid = ", result.bid);
+                break;
+            }
+            //--- order is not accepted by the server
+            case 10006: {
+                Print("TRADE_RETCODE_REJECT");
+                Print("request.price = ", request.price, "   result.ask = ",
+                      result.ask, " result.bid = ", result.bid);
+                break;
+            }
+            //--- invalid price
+            case 10015: {
+                Print("TRADE_RETCODE_INVALID_PRICE");
+                Print("request.price = ", request.price, "   result.ask = ",
+                      result.ask, " result.bid = ", result.bid);
+                break;
+            }
+            //--- invalid SL and/or TP
+            case 10016: {
+                Print("TRADE_RETCODE_INVALID_STOPS");
+                Print("request.sl = ", request.sl, " request.tp = ", request.tp);
+                Print("result.ask = ", result.ask, " result.bid = ", result.bid);
+                break;
+            }
+            //--- invalid volume
+            case 10014: {
+                Print("TRADE_RETCODE_INVALID_VOLUME");
+                Print("request.volume = ", request.volume, "   result.volume = ",
+                      result.volume);
+                break;
+            }
+            //--- not enough money for a trade operation
+            case 10019: {
+                Print("TRADE_RETCODE_NO_MONEY");
+                Print("request.volume = ", request.volume, "   result.volume = ",
+                      result.volume, "   result.comment = ", result.comment);
+                break;
+            }
+            //--- some other reason, output the server response code
+            default: {
+                Print("Other answer = ", answer);
+            }
+        }
+        //--- notify about the unsuccessful result of the trade request by returning false
+    }
+}
