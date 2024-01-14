@@ -22,6 +22,54 @@ int OnInit() {
         //--- the indicator is stopped early
         return (INIT_FAILED);
     }
+    color BuyColor  = clrBlue;
+    color SellColor = clrRed;
+
+    string name;
+    uint   total = HistoryDealsTotal();
+    Print("total: ", total);
+    ulong    ticket = 0;
+    double   price_h;
+    double   profit;
+    datetime time;
+    string   symbol;
+    long     type;
+    long     entry;
+    //--- for all deals
+    for(uint i = 0; i < total; i++) {
+        //--- try to get deals ticket
+        if((ticket = HistoryDealGetTicket(i)) > 0) {
+            //--- get deals properties
+            price_h = HistoryDealGetDouble(ticket, DEAL_PRICE);
+            time    = (datetime)HistoryDealGetInteger(ticket, DEAL_TIME);
+            symbol  = HistoryDealGetString(ticket, DEAL_SYMBOL);
+            type    = HistoryDealGetInteger(ticket, DEAL_TYPE);
+            entry   = HistoryDealGetInteger(ticket, DEAL_ENTRY);
+            profit  = HistoryDealGetDouble(ticket, DEAL_PROFIT);
+            Print("price_h: ", price_h);
+            Print("time: ", time);
+            Print("symbol: ", symbol);
+            Print("type: ", type);
+            Print("entry: ", entry);
+            Print("profit: ", profit);
+
+            //--- only for current symbol
+            if(price_h && time && symbol == Symbol()) {
+                //--- create price object
+                name = "TradeHistory_Deal_" + string(ticket);
+                if(entry)
+                    ObjectCreate(0, name, OBJ_ARROW_RIGHT_PRICE, 0, time, price_h, 0, 0);
+                else
+                    ObjectCreate(0, name, OBJ_ARROW_LEFT_PRICE, 0, time, price_h, 0, 0);
+                //--- set object properties
+                ObjectSetInteger(0, name, OBJPROP_SELECTABLE, 0);
+                ObjectSetInteger(0, name, OBJPROP_BACK, 0);
+                ObjectSetInteger(0, name, OBJPROP_COLOR, type ? BuyColor : SellColor);
+                if(profit != 0)
+                    ObjectSetString(0, name, OBJPROP_TEXT, "Profit: " + string(profit));
+            }
+        }
+    }
     return (INIT_SUCCEEDED);
 }
 
@@ -63,8 +111,8 @@ void OnTick() {
                 double price;
                 if(close_1 > Kij_1) {
                     price = SymbolInfoDouble(Symbol(), SYMBOL_ASK);
-                    sl = Kij_1 - Point() * 50;
-                    tp = price + (3 * (price - sl));
+                    sl    = Kij_1 - Point() * 50;
+                    tp    = price + (3 * (price - sl));
                     if(trade("ORDER_TYPE_BUY", "0.1", sl, tp)) {
                         first_cond  = false;
                         expire_cond = 0;
@@ -73,8 +121,8 @@ void OnTick() {
 
                 if(close_1 < Kij_1) {
                     price = SymbolInfoDouble(Symbol(), SYMBOL_BID);
-                    sl = Kij_1 + Point() * 50;
-                    tp = price - (3 * (sl - price));
+                    sl    = Kij_1 + Point() * 50;
+                    tp    = price - (3 * (sl - price));
                     if(trade("ORDER_TYPE_SELL", "0.1", sl, tp)) {
                         first_cond  = false;
                         expire_cond = 0;
@@ -102,6 +150,29 @@ double iIchimokuGet(const int buffer, const int index) {
         return (0.0);
     }
     return (Ichimoku[0]);
+}
+
+double deal_profitY() {
+
+    ulong    ticket;
+    datetime closeTime   = 0;
+    bool     found       = false;
+    double   deal_volume = 0;
+    // ulong order_magic;
+    string symbol;
+    if(HistorySelect(0, TimeCurrent())) {
+        for(int i = HistoryDealsTotal() - 1; i >= 0; i--) {
+            ticket = HistoryDealGetTicket(i);
+            symbol = HistoryDealGetString(ticket, DEAL_SYMBOL);
+
+            if((HistoryDealGetInteger(ticket, DEAL_ENTRY) == DEAL_ENTRY_OUT) && symbol == Symbol()) {
+                found       = true;
+                deal_volume = HistoryDealGetDouble(ticket, DEAL_VOLUME);
+                break;
+            }
+        }
+    }
+    return (deal_volume);
 }
 
 bool trade(string type, string vl, double sl, double tp) {
