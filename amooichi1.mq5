@@ -58,6 +58,16 @@ void OnTick() {
             Kij_1 == Kij_2 &&
             SpanA_1 == SpanA_2 &&
             SpanB_1 == SpanB_2) {
+            double sl;
+            double tp;
+            double price;
+            if(close_1 > Kij_1) {
+                price = SymbolInfoDouble(Symbol(), SYMBOL_BID);
+                // request.price = SymbolInfoDouble(Symbol(), SYMBOL_ASK);
+                sl = Kij_1 - Point() * 50;
+                tp = price + (3 * (price - sl));
+                trade("ORDER_TYPE_BUY", "0.1", sl, tp);
+            }
         }
     }
 }
@@ -80,6 +90,12 @@ void trade(string type, string vl, double sl, double tp) {
 
     MqlTradeRequest request = {};
     MqlTradeResult  result  = {};
+    // if(type == "ORDER_TYPE_SELL") {
+    //     request.price = SymbolInfoDouble(Symbol(), SYMBOL_BID);
+    // }
+    // if(type == "ORDER_TYPE_BUY") {
+    //     request.price = SymbolInfoDouble(Symbol(), SYMBOL_ASK);
+    // }
     if(type == "ORDER_TYPE_BUY") {
         request.type = ORDER_TYPE_BUY;
     }
