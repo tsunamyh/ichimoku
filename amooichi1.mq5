@@ -6,7 +6,9 @@ input int Inp_tenkan_sen    = 9;    // Ichimoku: period of Tenkan-sen
 input int Inp_kijun_sen     = 26;   // Ichimoku: period of Kijun-sen
 input int Inp_senkou_span_b = 52;   // Ichimoku: period of Senkou Span B
 
-int handle_iIchimoku;
+int  handle_iIchimoku;
+bool first_cond  = false;
+int  expire_cond = 0;
 
 int OnInit() {
     handle_iIchimoku = iIchimoku(Symbol(), Period(), Inp_tenkan_sen, Inp_kijun_sen, Inp_senkou_span_b);
@@ -21,9 +23,6 @@ int OnInit() {
         return (INIT_FAILED);
     }
     return (INIT_SUCCEEDED);
-}
-
-void OnDeinit(const int reason) {
 }
 
 void OnTick() {
@@ -52,22 +51,32 @@ void OnTick() {
         Print("SpanB_2:>", SpanB_2);
 
         double close_1 = MathRound(iClose(Symbol(), Period(), 1) * pow(10, Digits())) / pow(10, Digits());
-
-        if(
-            Ten_1 == Ten_2 &&
-            Kij_1 == Kij_2 &&
-            SpanA_1 == SpanA_2 &&
-            SpanB_1 == SpanB_2) {
-            double sl;
-            double tp;
-            double price;
-            if(close_1 > Kij_1) {
-                price = SymbolInfoDouble(Symbol(), SYMBOL_BID);
-                // request.price = SymbolInfoDouble(Symbol(), SYMBOL_ASK);
-                sl = Kij_1 - Point() * 50;
-                tp = price + (3 * (price - sl));
-                trade("ORDER_TYPE_BUY", "0.1", sl, tp);
+        if(first_cond && expire_cond < 6) {
+            expire_cond++;
+            if(
+                Ten_1 == Ten_2 &&
+                Kij_1 == Kij_2 &&
+                SpanA_1 == SpanA_2 &&
+                SpanB_1 == SpanB_2) {
+                double sl;
+                double tp;
+                double price;
+                if(close_1 > Kij_1) {
+                    price = SymbolInfoDouble(Symbol(), SYMBOL_BID);
+                    // request.price = SymbolInfoDouble(Symbol(), SYMBOL_ASK);
+                    sl = Kij_1 - Point() * 50;
+                    tp = price + (3 * (price - sl));
+                    if(trade("ORDER_TYPE_BUY", "0.1", sl, tp)) {
+                        first_cond  = false;
+                        expire_cond = 0;
+                    }
+                }
             }
+        }
+
+        if(SpanA_1 == SpanB_1) {
+            first_cond  = true;
+            expire_cond = 0;
         }
     }
 }
@@ -86,21 +95,18 @@ double iIchimokuGet(const int buffer, const int index) {
     return (Ichimoku[0]);
 }
 
-void trade(string type, string vl, double sl, double tp) {
+bool trade(string type, string vl, double sl, double tp) {
 
     MqlTradeRequest request = {};
     MqlTradeResult  result  = {};
-    // if(type == "ORDER_TYPE_SELL") {
-    //     request.price = SymbolInfoDouble(Symbol(), SYMBOL_BID);
-    // }
-    // if(type == "ORDER_TYPE_BUY") {
-    //     request.price = SymbolInfoDouble(Symbol(), SYMBOL_ASK);
-    // }
+
     if(type == "ORDER_TYPE_BUY") {
-        request.type = ORDER_TYPE_BUY;
+        request.type  = ORDER_TYPE_BUY;
+        request.price = SymbolInfoDouble(Symbol(), SYMBOL_ASK);
     }
     if(type == "ORDER_TYPE_SELL") {
-        request.type = ORDER_TYPE_SELL;
+        request.type  = ORDER_TYPE_SELL;
+        request.price = SymbolInfoDouble(Symbol(), SYMBOL_BID);
     }
 
     request.action = TRADE_ACTION_DEAL;
@@ -114,12 +120,6 @@ void trade(string type, string vl, double sl, double tp) {
     request.deviation    = 5;
     // request.expiration   = TimeCurrent() + 1200 * 3;
     // request.type_time    = ORDER_TIME_SPECIFIED;
-    if(type == "ORDER_TYPE_SELL") {
-        request.price = SymbolInfoDouble(Symbol(), SYMBOL_BID);
-    }
-    if(type == "ORDER_TYPE_BUY") {
-        request.price = SymbolInfoDouble(Symbol(), SYMBOL_ASK);
-    }
     Print(__FUNCTION__, request.price);
     bool success = OrderSend(request, result);
     Print("success: ", success);
@@ -174,6 +174,9 @@ void trade(string type, string vl, double sl, double tp) {
                 Print("Other answer = ", answer);
             }
         }
+        return false;
         //--- notify about the unsuccessful result of the trade request by returning false
+    } else {
+        return true;
     }
 }
