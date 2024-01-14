@@ -20,7 +20,6 @@ int OnInit() {
         //--- the indicator is stopped early
         return (INIT_FAILED);
     }
-    //---
     return (INIT_SUCCEEDED);
 }
 
@@ -51,6 +50,15 @@ void OnTick() {
         Print("Kij_2:>", Kij_2);
         Print("SpanA_2:>", SpanA_2);
         Print("SpanB_2:>", SpanB_2);
+
+        double close_1 = MathRound(iClose(Symbol(), Period(), 1) * pow(10, Digits())) / pow(10, Digits());
+
+        if(
+            Ten_1 == Ten_2 &&
+            Kij_1 == Kij_2 &&
+            SpanA_1 == SpanA_2 &&
+            SpanB_1 == SpanB_2) {
+        }
     }
 }
 
