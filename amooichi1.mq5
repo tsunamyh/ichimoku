@@ -24,7 +24,7 @@ int OnInit() {
     }
     color BuyColor  = clrBlue;
     color SellColor = clrRed;
-
+    HistorySelect(0,TimeCurrent());
     string name;
     uint   total = HistoryDealsTotal();
     Print("total: ", total);
@@ -84,19 +84,19 @@ void OnTick() {
         double Kij_1   = MathRound(iIchimokuGet(KIJUNSEN_LINE, 1) * pow(10, Digits())) / pow(10, Digits());
         double SpanA_1 = MathRound(iIchimokuGet(SENKOUSPANA_LINE, 1) * pow(10, Digits())) / pow(10, Digits());
         double SpanB_1 = MathRound(iIchimokuGet(SENKOUSPANB_LINE, 1) * pow(10, Digits())) / pow(10, Digits());
-        Print("Ten_1:>", Ten_1);
-        Print("Kij_1:>", Kij_1);
-        Print("SpanA_1:>", SpanA_1);
-        Print("SpanB_1:>", SpanB_1);
-        Print("Digits():>", Digits());
+        // Print("Ten_1:>", Ten_1);
+        // Print("Kij_1:>", Kij_1);
+        // Print("SpanA_1:>", SpanA_1);
+        // Print("SpanB_1:>", SpanB_1);
+        // Print("Digits():>", Digits());
         double Ten_2   = MathRound(iIchimokuGet(TENKANSEN_LINE, 2) * pow(10, Digits())) / pow(10, Digits());
         double Kij_2   = MathRound(iIchimokuGet(KIJUNSEN_LINE, 2) * pow(10, Digits())) / pow(10, Digits());
         double SpanA_2 = MathRound(iIchimokuGet(SENKOUSPANA_LINE, 2) * pow(10, Digits())) / pow(10, Digits());
         double SpanB_2 = MathRound(iIchimokuGet(SENKOUSPANB_LINE, 2) * pow(10, Digits())) / pow(10, Digits());
-        Print("Ten_2:>", Ten_2);
-        Print("Kij_2:>", Kij_2);
-        Print("SpanA_2:>", SpanA_2);
-        Print("SpanB_2:>", SpanB_2);
+        // Print("Ten_2:>", Ten_2);
+        // Print("Kij_2:>", Kij_2);
+        // Print("SpanA_2:>", SpanA_2);
+        // Print("SpanB_2:>", SpanB_2);
 
         double close_1 = MathRound(iClose(Symbol(), Period(), 1) * pow(10, Digits())) / pow(10, Digits());
         if(first_cond && expire_cond < 6 && PositionSelect(_Symbol)) {
